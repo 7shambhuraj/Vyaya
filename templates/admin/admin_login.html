@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Admin Login — Vyaya ET{% endblock %}
+{% block content %}
+
+<div class="admin-login-wrapper">
+  
+  <div class="admin-login-panel">
+    <div class="admin-panel-inner">
+      <div class="brand">
+        <div class="brand-icon"><i class="fas fa-wallet"></i></div>
+        <span class="brand-name">Vyaya ET</span>
+      </div>
+      <div class="admin-shield">
+        <div class="shield-glow"></div>
+        <i class="fas fa-shield-halved"></i>
+      </div>
+      <h2>Admin Control<br>Centre</h2>
+      <p>Restricted access. Authorised personnel only.</p>
+      <div class="admin-features">
+        <div class="af-item"><i class="fas fa-users"></i><span>Manage all users</span></div>
+        <div class="af-item"><i class="fas fa-crown"></i><span>Assign membership ranks</span></div>
+        <div class="af-item"><i class="fas fa-chart-bar"></i><span>Platform analytics</span></div>
+        <div class="af-item"><i class="fas fa-toggle-on"></i><span>Activate / deactivate accounts</span></div> <!-- left branding -->
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="admin-login-form-panel">                                                                                               <!-- right side login form -->
+    <div class="form-card admin-form-card">
+      <div class="admin-badge-top">
+        <i class="fas fa-user-shield"></i> Administrator
+      </div>
+      <div class="form-header">
+        <h2>Admin Sign In</h2>
+        <p>Enter your admin credentials to continue</p>
+      </div>
+
+      <form action="{{ url_for('admin_login') }}" method="POST" class="auth-form">
+        <div class="input-group">
+          <label><i class="fas fa-envelope"></i> Admin Email</label>
+          <input type="email" name="email" placeholder="admin@spendwise.com" required>
+        </div>
+        <div class="input-group">
+          <label><i class="fas fa-lock"></i> Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" name="password" placeholder="Admin password" required>
+            <button type="button" class="toggle-pw" onclick="togglePassword('password')">
+              <i class="fas fa-eye" id="eye-password"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary btn-full btn-admin">
+          <i class="fas fa-sign-in-alt"></i> <span>Access Admin Panel</span>
+        </button>
+      </form>
+
+      <div class="form-footer">
+        <p><a href="{{ url_for('login') }}"><i class="fas fa-arrow-left"></i> Back to User Login</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

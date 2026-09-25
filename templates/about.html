@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+{% block title %}About — Vyaya ET{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Cyber / terminal theme overrides for About page ── */
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+  .about-page { font-family: 'Share Tech Mono', monospace; }
+
+  .vyaya-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2.5rem; background: #0a0e1a;
+    border-bottom: 1px solid rgba(0,255,204,.15);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .vyaya-brand { display: flex; align-items: center; gap: 10px; }
+  .vyaya-brand-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg,#00ffcc,#0088ff);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem; color: #0a0e1a;
+  }
+  .vyaya-brand-name {
+    font-family: 'Orbitron', monospace; font-size: 1.1rem;
+    font-weight: 700; color: #00ffcc; letter-spacing: 2px;
+  }
+  .vyaya-nav-links { display: flex; gap: 1.5rem; }
+  .vyaya-nav-links a {
+    color: rgba(0,255,204,.6); font-size: .82rem; letter-spacing: 1px;
+    transition: color .2s; text-transform: uppercase;
+  }
+  .vyaya-nav-links a:hover { color: #00ffcc; }
+  .vyaya-nav-btn {
+    background: transparent; border: 1px solid #00ffcc;
+    color: #00ffcc; padding: 7px 18px; border-radius: 4px;
+    font-family: 'Share Tech Mono', monospace; font-size: .8rem;
+    cursor: pointer; transition: all .2s; letter-spacing: 1px;
+    text-decoration: none;
+  }
+  .vyaya-nav-btn:hover { background: #00ffcc; color: #0a0e1a; }
+
+  /* Hero */
+  .vyaya-hero {
+    text-align: center; padding: 5rem 2rem 3rem;
+    background: linear-gradient(180deg, #0a0e1a 0%, #0d1224 100%);
+    position: relative; overflow: hidden;
+  }
+  .vyaya-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,255,204,.08) 0%, transparent 60%);
+  }
+  .vyaya-hero-title {
+    font-family: 'Orbitron', monospace; font-size: 2.8rem;
+    font-weight: 900; color: #00ffcc; letter-spacing: 6px;
+    text-transform: uppercase; position: relative;
+    text-shadow: 0 0 30px rgba(0,255,204,.4);
+    margin-bottom: 1rem;
+  }
+  .vyaya-hero-sub {
+    color: rgba(0,255,204,.5); font-size: .9rem;
+    letter-spacing: 3px; text-transform: uppercase;
+  }
+  .vyaya-divider {
+    width: 100%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,255,204,.3), transparent);
+    margin: 2rem 0 0;
+  }
+
+  /* Content sections */
+  .vyaya-content { max-width: 960px; margin: 0 auto; padding: 3rem 2rem; }
+
+  .vyaya-section { margin-bottom: 3rem; }
+  .vyaya-section-title {
+    font-family: 'Orbitron', monospace; font-size: .95rem;
+    font-weight: 700; color: #00ffcc; letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .vyaya-section-title::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(90deg, rgba(0,255,204,.3), transparent);
+  }
+  .vyaya-section p {
+    color: rgba(200,220,255,.7); font-size: .88rem;
+    line-height: 1.8; max-width: 700px;
+  }
+
+  /* Feature list */
+  .vyaya-list { list-style: none; display: flex; flex-direction: column; gap: .6rem; margin-top: .8rem; }
+  .vyaya-list li {
+    display: flex; align-items: center; gap: 10px;
+    color: rgba(200,220,255,.7); font-size: .88rem;
+  }
+  .vyaya-list li::before {
+    content: '▸'; color: #00ffcc; font-size: .9rem; flex-shrink: 0;
+  }
+
+  /* Stats row */
+  .vyaya-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1rem; margin-bottom: 3rem;
+  }
+  .vyaya-stat {
+    background: rgba(0,255,204,.04);
+    border: 1px solid rgba(0,255,204,.15);
+    border-radius: 8px; padding: 1.5rem; text-align: center;
+    transition: border-color .2s;
+  }
+  .vyaya-stat:hover { border-color: rgba(0,255,204,.4); }
+  .vyaya-stat-num {
+    font-family: 'Orbitron', monospace; font-size: 2rem;
+    font-weight: 900; color: #00ffcc; display: block;
+    text-shadow: 0 0 20px rgba(0,255,204,.3);
+  }
+  .vyaya-stat-label { color: rgba(0,255,204,.5); font-size: .75rem; letter-spacing: 1px; margin-top: .3rem; }
+
+  /* Tech pills */
+  .vyaya-pills { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .8rem; }
+  .vyaya-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px; border: 1px solid rgba(0,255,204,.25);
+    border-radius: 4px; font-size: .78rem; color: rgba(0,255,204,.7);
+    background: rgba(0,255,204,.05); transition: all .2s;
+    letter-spacing: .5px;
+  }
+  .vyaya-pill:hover { border-color: #00ffcc; color: #00ffcc; background: rgba(0,255,204,.1); }
+  .vyaya-pill i { font-size: .75rem; }
+
+  /* Contact grid */
+  .vyaya-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+
+  .vyaya-contact-info { display: flex; flex-direction: column; gap: 1rem; }
+  .vyaya-contact-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 1rem; background: rgba(0,255,204,.04);
+    border: 1px solid rgba(0,255,204,.1); border-radius: 8px;
+    transition: border-color .2s;
+  }
+  .vyaya-contact-item:hover { border-color: rgba(0,255,204,.3); }
+  .vyaya-contact-icon {
+    width: 36px; height: 36px; border-radius: 6px;
+    background: rgba(0,255,204,.1); display: flex;
+    align-items: center; justify-content: center;
+    color: #00ffcc; font-size: .9rem; flex-shrink: 0;
+  }
+  .vyaya-contact-item h5 { color: #00ffcc; font-size: .8rem; letter-spacing: 1px; margin-bottom: .2rem; }
+  .vyaya-contact-item p  { color: rgba(200,220,255,.6); font-size: .82rem; }
+
+  /* Support form */
+  .vyaya-form { display: flex; flex-direction: column; gap: 1rem; }
+  .vyaya-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .vyaya-input-group { display: flex; flex-direction: column; gap: .4rem; }
+  .vyaya-input-group label {
+    font-size: .75rem; color: rgba(0,255,204,.6);
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .vyaya-input-group input,
+  .vyaya-input-group select,
+  .vyaya-input-group textarea {
+    background: rgba(0,255,204,.04);
+    border: 1px solid rgba(0,255,204,.2);
+    border-radius: 4px; padding: 10px 14px;
+    color: rgba(200,220,255,.9); font-family: 'Share Tech Mono', monospace;
+    font-size: .85rem; transition: border-color .2s; width: 100%;
+  }
+  .vyaya-input-group input:focus,
+  .vyaya-input-group select:focus,
+  .vyaya-input-group textarea:focus {
+    outline: none; border-color: #00ffcc;
+    box-shadow: 0 0 0 2px rgba(0,255,204,.1);
+  }
+  .vyaya-input-group textarea { resize: vertical; min-height: 110px; }
+  select option { background: #0d1224; }
+
+  .vyaya-submit-btn {
+    background: transparent; border: 1px solid #00ffcc;
+    color: #00ffcc; padding: 12px 28px; border-radius: 4px;
+    font-family: 'Orbitron', monospace; font-size: .8rem;
+    cursor: pointer; transition: all .2s; letter-spacing: 2px;
+    text-transform: uppercase; align-self: flex-start;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .vyaya-submit-btn:hover {
+    background: #00ffcc; color: #0a0e1a;
+    box-shadow: 0 0 20px rgba(0,255,204,.4);
+  }
+
+  /* Footer */
+  .vyaya-footer {
+    border-top: 1px solid rgba(0,255,204,.1);
+    padding: 2rem 2.5rem; background: #080b14;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+  }
+  .vyaya-footer-brand h4 {
+    font-family: 'Orbitron', monospace; color: #00ffcc;
+    font-size: .9rem; letter-spacing: 2px; margin-bottom: .5rem;
+  }
+  .vyaya-footer-brand p { color: rgba(200,220,255,.4); font-size: .78rem; line-height: 1.6; }
+
+  .vyaya-footer-links h5 {
+    font-family: 'Orbitron', monospace; color: #00ffcc;
+    font-size: .8rem; letter-spacing: 2px; margin-bottom: .8rem;
+  }
+  .vyaya-footer-links a {
+    display: block; color: rgba(200,220,255,.5);
+    font-size: .8rem; margin-bottom: .4rem; transition: color .2s;
+  }
+  .vyaya-footer-links a:hover { color: #00ffcc; }
+
+  .vyaya-footer-bottom {
+    text-align: center; padding: 1rem 2.5rem;
+    background: #080b14; border-top: 1px solid rgba(0,255,204,.06);
+    color: rgba(200,220,255,.3); font-size: .75rem; letter-spacing: 1px;
+  }
+
+  /* Required star */
+  .req { color: #ff6b6b; }
+
+  @media (max-width: 768px) {
+    .vyaya-hero-title { font-size: 1.8rem; letter-spacing: 3px; }
+    .vyaya-stats { grid-template-columns: 1fr; }
+    .vyaya-contact-grid { grid-template-columns: 1fr; }
+    .vyaya-form-row { grid-template-columns: 1fr; }
+    .vyaya-footer { grid-template-columns: 1fr; }
+    .vyaya-nav-links { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="about-page">
+
+  
+  <nav class="vyaya-nav">
+    <div class="vyaya-brand">
+      <div class="vyaya-brand-icon"><i class="fas fa-wallet"></i></div>
+      <span class="vyaya-brand-name">Vyaya ET</span>
+    </div>
+    <div class="vyaya-nav-links">
+      <a href="#about">About</a>
+      <a href="#features">Features</a>
+      <a href="#tech">Tech</a>
+      <a href="#contact">Contact</a>
+    </div>
+    {% if session.user_id %}
+      <a href="{{ url_for('dashboard') }}" class="vyaya-nav-btn">Dashboard</a>
+    {% else %}
+      <a href="{{ url_for('login') }}" class="vyaya-nav-btn">Login</a>
+    {% endif %}
+  </nav>
+
+  
+  <section class="vyaya-hero" id="about">
+    <h1 class="vyaya-hero-title">About Vyaya Expanse Tracker</h1>
+    <p class="vyaya-hero-sub">Your trusted personal finance partner</p>
+    <div class="vyaya-divider"></div>
+  </section>
+
+  
+  <div class="vyaya-content">
+
+    
+    <div class="vyaya-stats">
+      <div class="vyaya-stat">
+        <span class="vyaya-stat-num">6</span>
+        <div class="vyaya-stat-label">Membership Tiers</div>
+      </div>
+      <div class="vyaya-stat">
+        <span class="vyaya-stat-num">10</span>
+        <div class="vyaya-stat-label">Expense Categories</div>
+      </div>
+      <div class="vyaya-stat">
+        <span class="vyaya-stat-num">100%</span>
+        <div class="vyaya-stat-label">Secure & Private</div>
+      </div>
+    </div>
+
+    
+    <div class="vyaya-section" id="features">
+      <h3 class="vyaya-section-title">Who We Are</h3>
+      <p>VYAYA is a personal expense tracking platform built for individuals who want clear, honest visibility into their spending habits. We believe financial awareness is the first step toward financial freedom.</p>
+    </div>
+
+    
+    <div class="vyaya-section">
+      <h3 class="vyaya-section-title">Our Mission</h3>
+      <p>To give every user a simple, beautiful, and secure way to track their expenses — so they can make smarter financial decisions every single day.</p>
+    </div>
+
+   
+    <div class="vyaya-section">
+      <h3 class="vyaya-section-title">What We Offer</h3>
+      <ul class="vyaya-list">
+        <li>Real-time expense tracking with category breakdown</li>
+        <li>Interactive charts — monthly trends and spending patterns</li>
+        <li>Membership tiers: Free, Silver, Gold, Platinum, Diamond, Enterprise</li>
+        <li> Management</li>
+        <li>Secure login with profile photo and personal details</li>
+        <li>Fully responsive — works on any device</li>
+        <li>Support system with direct admin communication</li>
+      </ul>
+    </div>
+
+    <!-- Tech Stack 
+    <div class="vyaya-section" id="tech">
+      <h3 class="vyaya-section-title">Built With</h3>
+      <div class="vyaya-pills">
+        <span class="vyaya-pill"><i class="fab fa-python"></i> Python 3</span>
+        <span class="vyaya-pill"><i class="fas fa-flask"></i> Flask</span>
+        <span class="vyaya-pill"><i class="fas fa-database"></i> PostgreSQL</span>
+        <span class="vyaya-pill"><i class="fab fa-html5"></i> HTML5</span>
+        <span class="vyaya-pill"><i class="fab fa-css3-alt"></i> CSS3</span>
+        <span class="vyaya-pill"><i class="fab fa-js"></i> JavaScript</span>
+        
+        
+      </div>
+    </div>     -->
+
+    
+    <div class="vyaya-section" id="contact">
+      <h3 class="vyaya-section-title">Contact &amp; Support</h3>
+      <div class="vyaya-contact-grid">
+
+        
+        <div class="vyaya-contact-info">
+          <div class="vyaya-contact-item">
+            <div class="vyaya-contact-icon"><i class="fas fa-envelope"></i></div>
+            <div>
+              <h5>Email</h5>
+              <p>shambhu@vyayaetgmail.com</p>
+            </div>
+          </div>
+          <div class="vyaya-contact-item">
+            <div class="vyaya-contact-icon"><i class="fas fa-phone"></i></div>
+            <div>
+              <h5>Phone</h5>
+              <p>+91 98765 43210</p>
+            </div>
+          </div>
+          <div class="vyaya-contact-item">
+            <div class="vyaya-contact-icon"><i class="fas fa-clock"></i></div>
+            <div>
+              <h5>Support Hours</h5>
+              <p>Mon – Sat, 9:00 AM – 6:00 PM IST</p>
+            </div>
+          </div>
+          <div class="vyaya-contact-item">
+            <div class="vyaya-contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+            <div>
+              <h5>Location</h5>
+              <p> Maharashtra, India</p>
+            </div>
+          </div>
+        </div>
+
+        
+        <div>
+          <form action="{{ url_for('about') }}#contact" method="POST" class="vyaya-form"> <!--support form-->
+            <div class="vyaya-form-row">
+              <div class="vyaya-input-group">
+                <label>Name <span class="req">*</span></label>
+                <input type="text" name="name"
+                  value="{{ session.user_name if session.user_id else '' }}"
+                  placeholder="Your full name" required>
+              </div>
+              <div class="vyaya-input-group">
+                <label>Email <span class="req">*</span></label>
+                <input type="email" name="email"
+                  placeholder="yourraj@email.com" required>
+              </div>
+            </div>
+            <div class="vyaya-input-group">
+              <label>Subject</label>
+              <select name="subject">
+                <option value="General Inquiry">General Inquiry</option>
+                <option value="Technical Issue">Technical Issue</option>
+                <option value="Membership Query">Membership Query</option>
+                <option value="Account Problem">Account Problem</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Bug Report">Bug Report</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="vyaya-input-group">
+              <label>Message <span class="req">*</span></label>
+              <textarea name="message" placeholder="Describe your issue or question in detail..." required></textarea>
+            </div>
+            <button type="submit" class="vyaya-submit-btn">
+              <i class="fas fa-paper-plane"></i> Send Message
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- sm -->
+
+  
+  <footer class="vyaya-footer">
+    <div class="vyaya-footer-brand">
+      <h4>Vyaya ET</h4>
+      <p>Your trusted source for personal expense tracking and financial awareness solutions.</p>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem;">
+      <div class="vyaya-footer-links">
+        <h5>Quick Links</h5>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('about') }}">About Vyaya ET</a>
+        {% if session.user_id %}
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('profile') }}">Your Profile</a>
+        {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('register') }}">Register</a>
+        {% endif %}
+      </div>
+      <div class="vyaya-footer-links">
+        <h5>Contact Info</h5>
+        <a href="mailto:adminet@vyaya.com"><i class="fas fa-envelope" style="margin-right:6px"></i>raj@vyaya.com</a>
+        <a href="tel:+919876543210"><i class="fas fa-phone" style="margin-right:6px"></i>+91 98765 43210</a>
+        <a href="#contact"><i class="fas fa-headset" style="margin-right:6px"></i>Support Form</a>
+      </div>
+    </div>
+  </footer>
+  <div class="vyaya-footer-bottom">
+    &copy; 2025 Vyaya-ET. All rights reserved.
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Vyaya ET{% endblock %}
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+
+  
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-icon"><i class="fas fa-wallet"></i></div>
+        <span class="brand-name">Vyaya ET</span>
+      </div>
+      <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('dashboard') }}" class="nav-item active">
+        <i class="fas fa-th-large"></i><span>Dashboard</span>
+      </a>
+      <a href="/budgets" class="nav-item">
+        <i class="fa fa-bar-chart"></i><span>ur Budgets</span>
+      </a>
+      <a href="{{ url_for('profile') }}" class="nav-item">
+        <i class="fas fa-user-circle"></i><span>Profile</span>
+      </a>
+      <a href="{{ url_for('about') }}" class="nav-item">
+        <i class="fa fa-phone"></i><span>About VET</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        {% if session.user_pic %}
+          <img src="{{ url_for('static', filename='uploads/' + session.user_pic) }}" alt="avatar" class="user-avatar">
+        {% else %}
+          <div class="user-avatar-placeholder"><i class="fas fa-user"></i></div>
+        {% endif %}
+        <div class="user-info">
+          <span class="user-name">{{ session.user_name }}</span>
+          <small>Member</small>
+        </div>
+      </div>
+      <a href="{{ url_for('logout') }}" class="btn-logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+  </aside>
+
+  
+  <main class="main-content">
+    
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-sub">{{ now.strftime('%B %Y') if now else '' }} Overview</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-primary" onclick="openModal('addExpenseModal')">
+          <i class="fas fa-plus"></i> Add Expense
+        </button>
+      </div>
+    </header>
+
+    
+    <section class="stats-grid">
+      <div class="stat-card stat-blue">
+        <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+        <div class="stat-info">
+          <p>This Month</p>
+          <h3>₹{{ "%.0f"|format(monthly_total) }}</h3>
+        </div>
+        <div class="stat-bg-icon"><i class="fas fa-calendar-alt"></i></div>
+      </div>
+      <div class="stat-card stat-coral">
+        <div class="stat-icon"><i class="fas fa-sun"></i></div>
+        <div class="stat-info">
+          <p>Today</p>
+          <h3>₹{{ "%.0f"|format(today_total) }}</h3>
+        </div>
+        <div class="stat-bg-icon"><i class="fas fa-sun"></i></div>
+      </div>
+      <div class="stat-card stat-green">
+        <div class="stat-icon"><i class="fas fa-list-check"></i></div>
+        <div class="stat-info">
+          <p>Transactions</p>
+          <h3>{{ total_transactions }}</h3>
+        </div>
+        <div class="stat-bg-icon"><i class="fas fa-list-check"></i></div>
+      </div>
+      <div class="stat-card stat-purple">
+        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-info">
+          <p>This Year</p>
+          <h3>₹{{ "%.0f"|format(yearly_total) }}</h3>
+        </div>
+        <div class="stat-bg-icon"><i class="fas fa-chart-line"></i></div>
+      </div>
+    </section>
+
+    
+    <section class="charts-row">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Monthly Trend</h3>
+          <span class="badge badge-blue">Last 6 Months</span>
+        </div>
+        <div class="chart-body">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card chart-small">
+        <div class="chart-header">
+          <h3>By Category</h3>
+          <span class="badge badge-coral">This Month</span>
+        </div>
+        <div class="chart-body">
+          <canvas id="categoryChart"></canvas>
+        </div>
+        <div class="legend-list" id="legendList"></div>
+      </div>
+    </section>
+
+    
+    <section class="table-card">
+      <div class="table-header">
+        <h3>Recent Expenses</h3>
+        <div class="table-search">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search expenses…" oninput="filterTable()">
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="expense-table" id="expenseTable">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in recent_expenses %}
+            <tr>
+              <td>
+                <div class="expense-title-cell">
+                  <div class="cat-dot cat-{{ e.category|lower|replace(' ','') }}"></div>
+                  <span>{{ e.title }}</span>
+                </div>
+              </td>
+              <td><span class="badge-category">{{ e.category }}</span></td>
+              <td>{{ e.expense_date.strftime('%d %b %Y') if e.expense_date else '—' }}</td>
+              <td class="amount-cell">₹{{ "%.2f"|format(e.amount) }}</td>
+              <td>
+                <form action="{{ url_for('delete_expense', expense_id=e.id) }}" method="POST" onsubmit="return confirm('Delete this expense?')">
+                  <button type="submit" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="empty-row"><i class="fas fa-inbox"></i> No expenses yet. Add your first one!</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+
+<div class="modal-overlay" id="addExpenseModal" onclick="closeModalOutside(event,'addExpenseModal')"> <!-- Add Expense Modal -->
+  <div class="modal">
+    <div class="modal-header">
+      <h3><i class="fas fa-plus-circle"></i> Add New Expense</h3>
+      <button class="modal-close" onclick="closeModal('addExpenseModal')">×</button>
+    </div>
+    <form action="{{ url_for('add_expense') }}" method="POST" class="modal-form">
+      <div class="input-row">
+        <div class="input-group">
+          <label>Title</label>
+          <input type="text" name="title" placeholder="e.g. Grocery Shopping" required>
+        </div>
+        <div class="input-group">
+          <label>Amount (₹)</label>
+          <input type="number" name="amount" placeholder="0.00" step="0.01" min="0" required>
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Category</label>
+          <select name="category">
+            <option value="Food">🍛 Food</option>
+            <option value="Transport">🚗 Transport</option>
+            <option value="Utilities">⚡ Utilities</option>
+            <option value="Entertainment">🎬 Entertainment</option>
+            <option value="Healthcare">💊 Healthcare</option>
+            <option value="Education">📚 Education</option>
+            <option value="Shopping">🛍️ Shopping</option>
+            <option value="Health">💪 Health</option>
+            <option value="Travel">✈️ Travel</option>
+            <option value="Other">📦 Other</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Date</label>
+          <input type="date" name="expense_date" value="{{ today }}">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Description </label>
+        <textarea name="description" placeholder="Any notes…" rows="2"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal('addExpenseModal')">Cancel</button>
+        <button type="submit" class="btn-primary">Add Expense</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+const trendLabels = [{% for t in monthly_trend %}"{{ t.month }}"{{ "," if not loop.last }}{% endfor %}];    //  Chart data from Jinja 
+const trendData   = [{% for t in monthly_trend %}{{ t.total }}{{ "," if not loop.last }}{% endfor %}];
+const catLabels   = [{% for c in category_data %}"{{ c.category }}"{{ "," if not loop.last }}{% endfor %}];
+const catData     = [{% for c in category_data %}{{ c.total }}{{ "," if not loop.last }}{% endfor %}];
+
+document.addEventListener('DOMContentLoaded', () => {
+  initCharts(trendLabels, trendData, catLabels, catData);
+});
+
+
+document.querySelector('[name="expense_date"]').value = new Date().toISOString().split('T')[0];                        // Set today's date in modal
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

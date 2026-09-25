@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}{{ user.name }} — Admin View{% endblock %}
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+  <aside class="sidebar admin-sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-icon admin-brand-icon"><i class="fas fa-shield-halved"></i></div>
+        <span class="brand-name">Admin</span>
+      </div>
+      <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    </div>
+    <div class="admin-role-badge">
+      <i class="fas fa-user-shield"></i>
+      <div><span>{{ session.admin_name }}</span><small>{{ session.admin_role|title }}</small></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item">
+        <i class="fas fa-arrow-left"></i><span>Back to Dashboard</span>
+      </a>
+      <a href="{{ url_for('admin_user_detail', user_id=user.id) }}" class="nav-item active">
+        <i class="fas fa-user"></i><span>User Detail</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="{{ url_for('admin_logout') }}" class="btn-logout">
+        <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+      </a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div>
+          <h1 class="page-title">User Profile</h1>
+          <p class="page-sub">Detailed view for {{ user.name }}</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">
+          <i class="fas fa-arrow-left"></i> All Users
+        </a>
+      </div>
+    </header>
+
+    <div style="padding:1.5rem 2rem; display:grid; grid-template-columns:320px 1fr; gap:1.5rem;">
+
+                      <!--all User profile detaails  -->
+      <div>
+        <div class="profile-card">
+          <div class="profile-cover" style="background: linear-gradient(135deg, {{ membership_info.color }}60, {{ membership_info.color }}20)"></div>
+          <div class="profile-avatar-wrap">
+            {% if user.profile_picture %}
+              <img src="{{ url_for('static', filename='uploads/' + user.profile_picture) }}" class="profile-avatar" alt="">
+            {% else %}
+              <div class="profile-avatar-placeholder"><i class="fas fa-user"></i></div>
+            {% endif %}
+          </div>
+          <div class="profile-card-body">
+            <h2>{{ user.name }}</h2>
+            <div class="membership-badge-large" style="background:{{ membership_info.color }}20; color:{{ membership_info.color }}; border:1.5px solid {{ membership_info.color }}50;">
+              <i class="fas {{ membership_info.icon }}"></i> {{ user.membership or 'Free' }} Member
+            </div>
+            <p class="profile-email"><i class="fas fa-envelope"></i> {{ user.email }}</p>
+            {% if user.phone %}
+            <p class="profile-phone"><i class="fas fa-phone"></i> {{ user.phone }}</p>
+            {% endif %}
+            <div class="profile-meta">
+              <div class="meta-item"><i class="fas fa-calendar"></i>
+                <span>Joined {{ user.created_at.strftime('%d %b %Y') if user.created_at else '—' }}</span>
+              </div>
+              <div class="meta-item" style="margin-top:.4rem">
+                <i class="fas fa-circle" style="color:{% if user.is_active %}var(--green){% else %}var(--coral){% endif %}; font-size:.6rem"></i>
+                <span>{% if user.is_active %}Active{% else %}Inactive{% endif %} Account</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="detail-stats-grid" style="margin-top:1rem;">
+          <div class="detail-stat">
+            <i class="fas fa-receipt" style="color:var(--blue)"></i>
+            <div><span>{{ expenses|length }}</span><small>Expenses</small></div>
+          </div>
+          <div class="detail-stat">
+            <i class="fas fa-indian-rupee-sign" style="color:var(--coral)"></i>
+            <div><span>₹{{ "%.0f"|format(total_spent) }}</span><small>Total Spent</small></div>
+          </div>
+        </div>
+
+                     <!-- Admin actions -->
+        <div class="admin-action-card" style="margin-top:1rem;">
+          <h4><i class="fas fa-tools"></i> Admin Actions</h4>
+
+                        <!-- giving rank to user rank -->
+          <form action="{{ url_for('admin_update_membership') }}" method="POST" class="rank-assign-form">
+            <input type="hidden" name="user_id" value="{{ user.id }}">
+            <input type="hidden" name="redirect_to" value="user_detail">
+            <label style="font-size:.82rem; color:var(--text-secondary); margin-bottom:.5rem; display:block;">
+              <i class="fas fa-crown" style="color:var(--orange)"></i> Change Membership Rank
+            </label>
+            <div class="rank-select-row">
+              <select name="membership" class="rank-select">
+                {% for rank, info in membership_ranks.items() %}
+                <option value="{{ rank }}" {% if rank == (user.membership or 'Free') %}selected{% endif %}>
+                  {{ rank }}
+                </option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn-primary" style="padding:9px 16px; font-size:.85rem;">
+                <i class="fas fa-check"></i> Apply
+              </button>
+            </div>
+          </form>
+
+                            <!--  active  mgmt-->
+          <form action="{{ url_for('admin_toggle_user', user_id=user.id) }}" method="POST" style="margin-top:.8rem">
+            <button type="submit" class="btn-toggle-status {{ 'deactivate' if user.is_active else 'activate' }}"
+                    onclick="return confirm('Toggle account status?')">
+              {% if user.is_active %}
+                <i class="fas fa-ban"></i> Deactivate Account
+              {% else %}
+                <i class="fas fa-check-circle"></i> Activate Account
+              {% endif %}
+            </button>
+          </form>
+
+          <!-- for deleting or unwanted user Delete -->
+          <form action="{{ url_for('admin_delete_user', user_id=user.id) }}" method="POST" style="margin-top:.5rem">
+            <button type="submit" class="btn-danger-full"
+                    onclick="return confirm('PERMANENTLY DELETE {{ user.name }}? This cannot be undone.')">
+              <i class="fas fa-trash-alt"></i> Delete User
+            </button>
+          </form>
+        </div>
+      </div>
+
+                                                                                                              <!-- Right column: category chart + expenses table -->
+      <div style="display:flex; flex-direction:column; gap:1.5rem;">
+
+        
+        {% if cat_breakdown %}                                                                             <!-- Category breakdown chart like all spends -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Spending by Category</h3>
+            <span class="badge badge-blue">All Time</span>
+          </div>
+          <div class="chart-body"><canvas id="userCatChart"></canvas></div>
+        </div>
+        {% endif %}
+
+        <!-- Expenses table of all et  -->
+        <div class="table-card" style="margin:0">
+          <div class="table-header">
+            <h3><i class="fas fa-list"></i> All Expenses ({{ expenses|length }})</h3>
+          </div>
+          <div class="table-wrapper">
+            <table class="expense-table">
+              <thead>
+                <tr><th>Title</th><th>Category</th><th>Date</th><th>Amount</th></tr>
+              </thead>
+              <tbody>
+                {% for e in expenses %}
+                <tr>
+                  <td>{{ e.title }}</td>
+                  <td><span class="badge-category">{{ e.category }}</span></td>
+                  <td style="font-size:.82rem; color:var(--text-secondary)">
+                    {{ e.expense_date.strftime('%d %b %Y') if e.expense_date else '—' }}
+                  </td>
+                  <td class="amount-cell">₹{{ "%.2f"|format(e.amount) }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="empty-row">No expenses recorded.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+{% if cat_breakdown %}
+const catLabels = [{% for c in cat_breakdown %}"{{ c.category }}"{{ "," if not loop.last }}{% endfor %}];
+const catData   = [{% for c in cat_breakdown %}{{ c.total }}{{ "," if not loop.last }}{% endfor %}];
+const PALETTE   = ['#4f8ef7','#ff6b6b','#36d399','#a78bfa','#fb923c','#2dd4bf','#f59e0b','#ec4899','#6366f1','#06b6d4'];
+
+document.addEventListener('DOMContentLoaded', () => {
+  const ctx = document.getElementById('userCatChart');
+  if (!ctx) return;
+  Chart.defaults.color = '#8b92b8';
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: catLabels,
+      datasets: [{
+        label: '₹ Spent',
+        data: catData,
+        backgroundColor: PALETTE,
+        borderRadius: 8, borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => '₹'+v } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+});
+{% endif %}
+</script>
+{% endblock %}

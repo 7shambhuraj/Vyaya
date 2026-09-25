@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Vyaya-ET{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="toast-container">
+      {% for category, message in messages %}
+        <div class="toast toast-{{ category }}">
+          <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+          <span>{{ message }}</span>
+          <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

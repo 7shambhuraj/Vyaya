@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}V-ET Support Messages — Admin{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+  <aside class="sidebar admin-sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-icon admin-brand-icon"><i class="fas fa-shield-halved"></i></div>
+        <span class="brand-name">Admin</span>
+      </div>
+      <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    </div>
+    <div class="admin-role-badge">
+      <i class="fas fa-user-shield"></i>
+      <div><span>{{ session.admin_name }}</span><small>{{ session.admin_role|title }}</small></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item">
+        <i class="fas fa-th-large"></i><span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('admin_messages') }}" class="nav-item active">
+        <i class="fas fa-envelope"></i>
+        <span>Messages</span>
+        {% if unread_count > 0 %}
+          <span class="msg-badge">{{ unread_count }}</span>
+        {% endif %}
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="{{ url_for('admin_logout') }}" class="btn-logout">
+        <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+      </a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div>
+          <h1 class="page-title">Support Messages</h1>
+          <p class="page-sub">
+            {{ messages|length }} total &nbsp;·&nbsp;
+            <span style="color:var(--coral)">{{ unread_count }} unread</span>
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <div style="padding:1.5rem 2rem;">
+
+      
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem;">  <!-- Stats row -->
+        <div class="stat-card stat-blue">
+          <div class="stat-icon"><i class="fas fa-envelope"></i></div>
+          <div class="stat-info"><p>Total Messages</p><h3>{{ messages|length }}</h3></div>
+          <div class="stat-bg-icon"><i class="fas fa-envelope"></i></div>
+        </div>
+        <div class="stat-card stat-coral">
+          <div class="stat-icon"><i class="fas fa-envelope-open"></i></div>
+          <div class="stat-info"><p>Unread</p><h3>{{ unread_count }}</h3></div>
+          <div class="stat-bg-icon"><i class="fas fa-envelope-open"></i></div>
+        </div>
+        <div class="stat-card stat-green">
+          <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+          <div class="stat-info"><p>Read</p><h3>{{ messages|length - unread_count }}</h3></div>
+          <div class="stat-bg-icon"><i class="fas fa-check-circle"></i></div>
+        </div>
+      </div>
+
+      <!-- Messages list from user tahat give to admin -->
+      {% if messages %}
+        {% for msg in messages %}
+        <div class="msg-card {% if not msg.is_read %}msg-unread{% endif %}">
+          <div class="msg-card-header">
+            <div class="msg-sender">
+              <div class="msg-avatar">{{ msg.name[0].upper() }}</div>
+              <div>
+                <span class="msg-name">{{ msg.name }}</span>
+                <span class="msg-email">{{ msg.email }}</span>
+              </div>
+            </div>
+            <div class="msg-meta">
+              <span class="msg-subject-badge">{{ msg.subject or 'General Inquiry' }}</span>
+              {% if not msg.is_read %}
+                <span class="msg-new-badge">NEW</span>
+              {% endif %}
+              <span class="msg-time">
+                <i class="fas fa-clock"></i>
+                {{ msg.created_at.strftime('%d %b %Y, %I:%M %p') if msg.created_at else '—' }}
+              </span>
+              {% if msg.user_id %}
+                <span class="msg-user-tag"><i class="fas fa-user-check"></i> Registered User</span>
+              {% else %}
+                <span class="msg-guest-tag"><i class="fas fa-user"></i> Guest</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="msg-body">{{ msg.message }}</div>
+
+          <div class="msg-actions">
+            {% if not msg.is_read %}
+            <form action="{{ url_for('admin_mark_read', msg_id=msg.id) }}" method="POST" style="display:inline">
+              <button type="submit" class="btn-mark-read">
+                <i class="fas fa-check"></i> Mark as Read
+              </button>
+            </form>
+            {% else %}
+              <span style="color:var(--text-muted); font-size:.8rem;"><i class="fas fa-check-double"></i> Read</span>
+            {% endif %}
+            <a href="mailto:{{ msg.email }}?subject=Re: {{ msg.subject or 'Your Query' }}" class="btn-reply">
+              <i class="fas fa-reply"></i> Reply via Email
+            </a>
+            <form action="{{ url_for('admin_delete_message', msg_id=msg.id) }}" method="POST" style="display:inline"
+                  onsubmit="return confirm('Delete this message?')">
+              <button type="submit" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align:center; padding:4rem; color:var(--text-muted);">
+          <i class="fas fa-inbox" style="font-size:3rem; margin-bottom:1rem; display:block;"></i>
+          <p>No support messages yet.</p>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+
+<style>
+.msg-badge {
+  background: var(--coral); color: #fff;
+  border-radius: 10px; padding: 1px 7px;
+  font-size: .7rem; font-weight: 700; margin-left: auto;
+}
+.msg-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 1rem;
+  overflow: hidden; transition: border-color .2s;
+}
+.msg-card:hover { border-color: rgba(79,142,247,.3); }
+.msg-unread { border-left: 3px solid var(--coral); }
+.msg-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: .8rem;
+  padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
+  background: var(--bg-card-2);
+}
+.msg-sender { display: flex; align-items: center; gap: 10px; }
+.msg-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1rem; color: #fff; flex-shrink: 0;
+}
+.msg-name  { display: block; font-weight: 600; font-size: .9rem; }
+.msg-email { display: block; color: var(--text-muted); font-size: .78rem; }
+.msg-meta  { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; }
+.msg-subject-badge {
+  padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600;
+  background: var(--blue-dim); color: var(--blue-light);
+}
+.msg-new-badge {
+  padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700;
+  background: var(--coral-dim); color: var(--coral);
+  animation: blink 2s ease-in-out infinite;
+}
+.msg-time, .msg-user-tag, .msg-guest-tag {
+  font-size: .75rem; color: var(--text-muted);
+  display: flex; align-items: center; gap: 4px;
+}
+.msg-user-tag { color: var(--green); }
+.msg-body { padding: 1.2rem 1.5rem; font-size: .88rem; color: var(--text-secondary); line-height: 1.7; }
+.msg-actions {
+  display: flex; align-items: center; gap: .8rem;
+  padding: .8rem 1.5rem; border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.btn-mark-read {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: var(--radius-sm);
+  background: var(--green-dim); color: var(--green);
+  border: none; cursor: pointer; font-size: .8rem; font-weight: 600;
+  transition: background .2s;
+}
+.btn-mark-read:hover { background: rgba(54,211,153,.3); }
+.btn-reply {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: var(--radius-sm);
+  background: var(--blue-dim); color: var(--blue-light);
+  font-size: .8rem; font-weight: 600; transition: background .2s;
+}
+.btn-reply:hover { background: rgba(79,142,247,.3); }
+</style>
+{% endblock %}

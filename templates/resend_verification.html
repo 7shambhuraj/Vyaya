@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Resend Verification — Vyaya ET{% endblock %}
+{% block content %}
+
+<div class="auth-wrapper">
+  <div class="auth-panel">
+    <div class="auth-panel-content">
+      <div class="brand">
+        <div class="brand-icon"><i class="fas fa-wallet"></i></div>
+        <h1 class="brand-name">Vyaya ET</h1>
+      </div>
+      <div class="panel-illustration">
+        <div class="float-card fc1"><i class="fas fa-envelope"></i><span>Verify</span><small>Email</small></div>
+        <div class="float-card fc2"><i class="fas fa-shield-alt"></i><span>Secure</span><small>Account</small></div>
+        <div class="float-card fc3"><i class="fas fa-check-circle"></i><span>Activate</span><small>Account</small></div>
+        <div class="big-circle"></div>
+        <div class="small-circle"></div>
+      </div>
+      <div class="panel-tagline">
+        <h2>Verify Your<br>Email Address</h2>
+        <p>Enter your registered email and we'll send you a new verification link.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="form-card">
+      <div class="form-header">
+        <div style="width:60px;height:60px;border-radius:50%;background:rgba(79,142,247,.15);
+                    display:flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+          <i class="fas fa-envelope" style="font-size:1.5rem;color:var(--blue)"></i>
+        </div>
+        <h2>Resend Verification</h2>
+        <p>We'll email you a new verification link</p>
+      </div>
+
+      <form action="{{ url_for('resend_verification') }}" method="POST" class="auth-form">
+        <div class="input-group">
+          <label><i class="fas fa-envelope"></i> Registered Email Address</label>
+          <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <button type="submit" class="btn-primary btn-full">
+          <i class="fas fa-paper-plane"></i> <span>Send Verification Email</span>
+        </button>
+      </form>
+
+      <div class="form-footer">
+        <p>Already verified? <a href="{{ url_for('login') }}">Sign in</a></p>
+        <p style="margin-top:.5rem;">New here? <a href="{{ url_for('register') }}">Create account</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

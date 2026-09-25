@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Register — Vyaya ET{% endblock %}
+{% block content %}
+
+<div class="auth-wrapper">
+  
+  <div class="auth-panel">
+    <div class="auth-panel-content">
+      <div class="brand">
+        <div class="brand-icon"><i class="fas fa-wallet"></i></div>
+        <h1 class="brand-name">Vyaya ET</h1>
+      </div>
+      <div class="panel-illustration">
+        <div class="float-card fc1"><i class="fas fa-chart-pie"></i><span>Analytics</span><small>Live charts</small></div> <!-- Left Side of web -->
+        <div class="float-card fc2"><i class="fas fa-shield-alt"></i><span>Secure</span><small>Encrypted</small></div>
+        <div class="float-card fc3"><i class="fas fa-bell"></i><span>Alerts</span><small>Budget tips</small></div>
+        <div class="big-circle"></div>
+        <div class="small-circle"></div>
+      </div>
+      <div class="panel-tagline">
+        <h2>Start Your Financial<br>Journey Today.</h2>
+        <p>Join thousands managing their finances smarter with Vyaya ET.</p>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="auth-form-panel">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>Create Account</h2>
+        <p>Fill in your details to get started</p>
+      </div>
+
+      <form action="{{ url_for('register') }}" method="POST" enctype="multipart/form-data" class="auth-form">  <!-- Right side page   -->
+
+        
+        <div class="avatar-upload-group">
+          <div class="avatar-preview" id="avatarPreview">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="avatar-info">
+            <label for="profile_picture" class="btn-upload">
+              <i class="fas fa-camera"></i> Upload Photo
+            </label>
+            <input type="file" id="profile_picture" name="profile_picture" accept="image/*" onchange="previewAvatar(event)" hidden>  <!-- Profile photo uploard sati -->
+            <small>JPG, PNG, WEBP up to 5 MB</small>
+          </div>
+        </div>
+
+        <div class="input-row">
+          <div class="input-group">
+            <label for="name"><i class="fas fa-user"></i> Full Name</label>
+            <input type="text" id="name" name="name" placeholder="Raj Swami" required>
+          </div>
+          <div class="input-group">
+            <label for="phone"><i class="fas fa-phone"></i> Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="+91 98765 43210">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+          <input type="email" id="email" name="email" placeholder="you@gmail.com" required>
+        </div>
+
+        <div class="input-group">
+          <label for="password"><i class="fas fa-lock"></i> Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" name="password" placeholder="Create a strong password" required>
+            <button type="button" class="toggle-pw" onclick="togglePassword('password')">
+              <i class="fas fa-eye" id="eye-password"></i>
+            </button>
+          </div>
+          <div class="password-strength" id="pwStrength"></div>
+        </div>
+
+        <button type="submit" class="btn-primary btn-full">
+          <span>Create Account</span>
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <div class="form-footer">
+        <p>Already have an account? <a href="{{ url_for('login') }}">Sign in</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

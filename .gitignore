@@ -1,0 +1,15 @@
+.venv/ 
+__pycache__/ 
+*.pyc 
+static/uploads/* 
+!static/uploads/.gitkeep 
+.venv/ 
+__pycache__/ 
+*.pyc 
+static/uploads/* 
+!static/uploads/.gitkeep 
+.venv/ 
+__pycache__/ 
+*.pyc 
+static/uploads/* 
+!static/uploads/.gitkeep 

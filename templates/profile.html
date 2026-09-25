@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Profile Vyaya ET{% endblock %}
+{% block content %}
+<div class="app-layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-icon"><i class="fas fa-wallet"></i></div>
+        <span class="brand-name">Vyaya ET</span>
+      </div>
+      <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('dashboard') }}" class="nav-item"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+      <a href="{{ url_for('budgets') }}" class="nav-item"><i class="fa fa-bar-chart"></i><span>Budgets</span></a>
+      <a href="{{ url_for('profile') }}" class="nav-item active"><i class="fas fa-user-circle"></i><span>Profile</span></a>
+      <a href="{{ url_for('about') }}" class="nav-item"><i class="fa fa-phone"></i><span>About</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        {% if session.user_pic %}
+          <img src="{{ url_for('static', filename='uploads/' + session.user_pic) }}" alt="avatar" class="user-avatar">
+        {% else %}
+          <div class="user-avatar-placeholder"><i class="fas fa-user"></i></div>
+        {% endif %}
+        <div class="user-info"><span class="user-name">{{ session.user_name }}</span><small>Member</small></div>
+      </div>
+      <a href="{{ url_for('logout') }}" class="btn-logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div><h1 class="page-title">My Profile</h1><p class="page-sub">Manage your account details</p></div>
+      </div>
+    </header>
+
+    <div class="profile-layout">
+      
+      <div class="profile-card">
+        <div class="profile-cover"></div>
+        <div class="profile-avatar-wrap">
+          {% if user.profile_picture %}
+            <img src="{{ url_for('static', filename='uploads/' + user.profile_picture) }}" alt="Profile" class="profile-avatar" id="profileAvatarImg">
+          {% else %}
+            <div class="profile-avatar-placeholder" id="profileAvatarImg"><i class="fas fa-user"></i></div>
+          {% endif %}
+        </div>
+        <div class="profile-card-body">
+          <h2>{{ user.name }}</h2>
+          <p class="profile-email"><i class="fas fa-envelope"></i> {{ user.email }}</p>
+          {% if user.phone %}
+          <p class="profile-phone"><i class="fas fa-phone"></i> {{ user.phone }}</p>
+          {% endif %}
+          <div class="profile-meta">
+            <div class="meta-item">
+              <i class="fas fa-calendar"></i>
+              <span>Joined {{ user.created_at.strftime('%b %Y') if user.created_at else '—' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+      <div class="profile-edit-card">
+        <h3><i class="fas fa-edit"></i> Edit Information</h3>
+        <form action="{{ url_for('profile') }}" method="POST" enctype="multipart/form-data" class="auth-form">
+          <div class="avatar-upload-group">
+            <div class="avatar-preview" id="avatarPreview">
+              {% if user.profile_picture %}
+                <img src="{{ url_for('static', filename='uploads/' + user.profile_picture) }}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%">
+              {% else %}
+                <i class="fas fa-user"></i>
+              {% endif %}
+            </div>
+            <div class="avatar-info">
+              <label for="profile_picture" class="btn-upload"><i class="fas fa-camera"></i> Change Photo</label>
+              <input type="file" id="profile_picture" name="profile_picture" accept="image/*" onchange="previewAvatar(event)" hidden>
+              <small>JPG, PNG, WEBP up to 5MB</small>
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="input-group">
+              <label><i class="fas fa-user"></i> Full Name</label>
+              <input type="text" name="name" value="{{ user.name }}" required>
+            </div>
+            <div class="input-group">
+              <label><i class="fas fa-phone"></i> Phone Number</label>
+              <input type="tel" name="phone" value="{{ user.phone or '' }}" placeholder="+91 98765 43210">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label><i class="fas fa-envelope"></i> Email (read only)</label>
+            <input type="email" value="{{ user.email }}" disabled>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

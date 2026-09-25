@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Login — Vyaya ET{% endblock %}
+{% block content %}
+
+<div class="auth-wrapper">
+                                                                                                       <!-- left designn decorative panel page -->
+  <div class="auth-panel">
+    <div class="auth-panel-content">
+      <div class="brand">
+        <div class="brand-icon"><i class="fas fa-wallet"></i></div>
+        <h1 class="brand-name">VYAYA  ET :- व्यय</h1>
+      </div>
+      <div class="panel-illustration">
+        <div class="float-card fc1"><i class="fas fa fa-gamepad"></i><span>₹2,500</span><small>Royal Pass</small></div>
+        <div class="float-card fc2"><i class="fas fa fa-birthday-cake"></i><span>BGMI</span><small>Utilities</small></div>
+        <div class="float-card fc3"><i class="fas fa fa-motorcycle"></i><span>Bike</span><small>Transport</small></div>
+                                                                                                         <div class="big-circle"></div>    
+        <div class="small-circle"></div>      
+      </div>  
+      <div class="panel-tagline">
+        <h2>Track Every Rupee.<br>Comprehensive Expense Tracking.</h2>
+        <p>An Efficient Tool for Tracking Personal Finances and Generating Monthly Insights.</p>
+      </div>
+    </div>
+  </div>
+
+                                                                                                           <!-- Right side page form  -->
+  <div class="auth-form-panel">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>Welcome Back</h2>
+        <p>Sign in to your account</p>
+      </div>
+
+      <form action="{{ url_for('login') }}" method="POST" class="auth-form">
+        <div class="input-group">
+          <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+          <input type="email" id="email" name="email" placeholder="you@email.com" required autocomplete="email">
+        </div>
+
+        <div class="input-group">
+          <label for="password"><i class="fas fa-lock"></i> Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+            <button type="button" class="toggle-pw" onclick="togglePassword('password')">
+              <i class="fas fa-eye" id="eye-password"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary btn-full">
+          <span>Sign In</span>
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <div class="form-footer">
+        <p>Don't have an account? <a href="{{ url_for('register') }}">Create one</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

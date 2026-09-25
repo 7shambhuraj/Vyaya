@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — Vyaya ET{% endblock %}
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+
+  <!-- Admin Sidebar -->
+  <aside class="sidebar admin-sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-icon admin-brand-icon"><i class="fas fa-shield-halved"></i></div>
+        <span class="brand-name">Vyaya Admin</span>
+      </div>
+      <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    </div>
+
+    <div class="admin-role-badge">
+      <i class="fas fa-user-shield"></i>
+      <div>
+        <span>{{ session.admin_name }}</span>
+        <small>{{ session.admin_role | title }}</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item active">
+        <i class="fas fa-th-large"></i><span>Dashboard</span>
+      </a>
+      <a href="#usersSection" class="nav-item" onclick="scrollToSection('usersSection')">
+        <i class="fas fa-users"></i><span>Users</span>
+      </a>
+            <a href="{{ url_for('admin_messages') }}" class="nav-item active">
+        <i class="fas fa-envelope"></i>
+        <span>Messages</span>
+      </a>                        
+      <a href="#activitySection" class="nav-item" onclick="scrollToSection('activitySection')">
+        <i class="fa fa-area-chart"></i><span>Activity</span>
+      </a>
+      <div class="nav-divider"></div>
+      <a href="{{ url_for('index') }}" class="nav-item" target="_blank">
+        <i class="fas fa-external-link-alt"></i><span>View Site</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="{{ url_for('admin_logout') }}" class="btn-logout">
+        <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div>
+          <h1 class="page-title">Admin Dashboard</h1>
+          <p class="page-sub">Platform overview & user management</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="admin-topbar-info">
+          <span class="admin-live-dot"></span>
+          <span style="font-size:.82rem;color:var(--text-secondary)">Live Data</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Platform Stats -->
+    <section class="stats-grid">
+      <div class="stat-card stat-blue">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-info"><p>Total Users</p><h3>{{ total_users }}</h3></div>
+        <div class="stat-bg-icon"><i class="fas fa-users"></i></div>
+      </div>
+      <div class="stat-card stat-coral">
+        <div class="stat-icon"><i class="fas fa-receipt"></i></div>
+        <div class="stat-info"><p>Total Expenses</p><h3>{{ total_expenses }}</h3></div>
+        <div class="stat-bg-icon"><i class="fas fa-receipt"></i></div>
+      </div>
+      <div class="stat-card stat-green">
+        <div class="stat-icon"><i class="fas fa-indian-rupee-sign"></i></div>
+        <div class="stat-info"><p>Platform Volume</p><h3>₹{{ "%.0f"|format(platform_total) }}</h3></div>
+        <div class="stat-bg-icon"><i class="fas fa-indian-rupee-sign"></i></div>
+      </div>
+      <div class="stat-card stat-purple">
+        <div class="stat-icon"><i class="fas fa-user-plus"></i></div>
+        <div class="stat-info"><p>New This Week</p><h3>{{ new_this_week }}</h3></div>
+        <div class="stat-bg-icon"><i class="fas fa-user-plus"></i></div>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="charts-row">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>User Growth</h3>
+          <span class="badge badge-blue">Last 6 Months</span>
+        </div>
+        <div class="chart-body"><canvas id="growthChart"></canvas></div>
+      </div>
+      <div class="chart-card chart-small">
+        <div class="chart-header">
+          <h3>Membership Distribution</h3>
+          <span class="badge badge-coral">All Time</span>
+        </div>
+        <div class="chart-body"><canvas id="rankChart"></canvas></div>
+        <div class="legend-list" id="rankLegend"></div>
+      </div>
+    </section>
+
+    <!-- Membership breakdown pills -->
+    <section class="membership-overview">
+      <h3 class="section-title"><i class="fas fa-crown"></i> Membership Overview</h3>
+      <div class="rank-pills">
+        {% for rank, info in membership_ranks.items() %}
+        <div class="rank-pill" style="border-color:{{ info.color }}20; background: {{ info.color }}10;">
+          <i class="fas {{ info.icon }}" style="color:{{ info.color }}"></i>
+          <span style="color:{{ info.color }}; font-weight:700;">{{ rank }}</span>
+          <span class="rank-count" id="rank-count-{{ rank }}">
+            {% for ms in membership_stats %}{% if ms.membership == rank %}{{ ms.cnt }}{% endif %}{% endfor %}
+            {% if rank not in membership_stats|map(attribute='membership')|list %}0{% endif %}
+          </span>
+          <small>users</small>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Users Table -->
+    <section class="table-card" id="usersSection">
+      <div class="table-header">
+        <h3><i class="fas fa-users"></i> All Users</h3>
+        <div class="table-search">
+          <i class="fas fa-search"></i>
+          <input type="text" id="userSearch" placeholder="Search users…" oninput="filterUsers()">
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="expense-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Contact</th>
+              <th>Membership</th>
+              <th>Expenses</th>
+              <th>Total Spent</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            {% set rank_info = membership_ranks.get(user.membership or 'Free', membership_ranks['Free']) %}
+            <tr id="user-row-{{ user.id }}">
+              <!-- User info -->
+              <td>
+                <div class="user-cell">
+                  {% if user.profile_picture %}
+                    <img src="{{ url_for('static', filename='uploads/' + user.profile_picture) }}" class="table-avatar" alt="">
+                  {% else %}
+                    <div class="table-avatar-placeholder"><i class="fas fa-user"></i></div>
+                  {% endif %}
+                  <div>
+                    <span class="user-cell-name">{{ user.name }}</span>
+                    <small>ID #{{ user.id }}</small>
+                  </div>
+                </div>
+              </td>
+              <!-- Contact -->
+              <td>
+                <div style="display:flex;flex-direction:column;gap:2px;">
+                  <span style="font-size:.82rem;">{{ user.email }}</span>
+                  <small style="color:var(--text-muted)">{{ user.phone or '—' }}</small>
+                </div>
+              </td>
+              <!-- Membership badge + inline changer -->
+              <td>
+                <div class="membership-cell">
+                  <span class="membership-badge" style="background:{{ rank_info.color }}20; color:{{ rank_info.color }}; border:1px solid {{ rank_info.color }}40;">
+                    <i class="fas {{ rank_info.icon }}"></i> {{ user.membership or 'Free' }}
+                  </span>
+                  <button class="btn-change-rank" onclick="openRankModal({{ user.id }}, '{{ user.name }}', '{{ user.membership or 'Free' }}')">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </div>
+              </td>
+              <td>{{ user.expense_count }}</td>
+              <td class="amount-cell">₹{{ "%.0f"|format(user.total_spent) }}</td>
+              <!-- Status toggle -->
+              <td>
+                <form action="{{ url_for('admin_toggle_user', user_id=user.id) }}" method="POST" style="display:inline">
+                  <button type="submit" class="status-toggle {{ 'active' if user.is_active else 'inactive' }}"
+                          onclick="return confirm('Toggle this user\'s status?')">
+                    {% if user.is_active %}<i class="fas fa-check-circle"></i> Active
+                    {% else %}<i class="fas fa-ban"></i> Inactive{% endif %}
+                  </button>
+                </form>
+              </td>
+              <td style="font-size:.82rem;color:var(--text-secondary)">
+                {{ user.created_at.strftime('%d %b %Y') if user.created_at else '—' }}
+              </td>
+              <!-- Actions -->
+              <td>
+                <div class="action-btns">
+                  <a href="{{ url_for('admin_user_detail', user_id=user.id) }}" class="btn-view" title="View details">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  <form action="{{ url_for('admin_delete_user', user_id=user.id) }}" method="POST" style="display:inline">
+                    <button type="submit" class="btn-delete" title="Delete user"
+                            onclick="return confirm('Permanently delete {{ user.name }}? This removes all their expenses too.')">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="empty-row"><i class="fas fa-inbox"></i> No users yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Recent Activity -->
+    <section class="table-card" id="activitySection" style="margin-top:0">
+      <div class="table-header">
+        <h3><i class="fas fa-bolt"></i> Recent U Activity</h3>
+        <span class="badge badge-blue">Latest 8</span>
+      </div>
+      <div class="table-wrapper">
+        <table class="expense-table">
+          <thead><tr><th>User</th><th>Expense</th><th>Category</th><th>Date</th><th>Amount</th></tr></thead>
+          <tbody>
+            {% for a in recent_activity %}
+            <tr>
+              <td style="font-weight:600">{{ a.user_name }}</td>
+              <td>{{ a.title }}</td>
+              <td><span class="badge-category">{{ a.category }}</span></td>
+              <td style="font-size:.82rem;color:var(--text-secondary)">{{ a.expense_date.strftime('%d %b %Y') if a.expense_date else '—' }}</td>
+              <td class="amount-cell">₹{{ "%.2f"|format(a.amount) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="empty-row">No activity yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Rank Assignment Modal -->
+<div class="modal-overlay" id="rankModal" onclick="closeModalOutside(event,'rankModal')">
+  <div class="modal rank-modal">
+    <div class="modal-header">
+      <h3><i class="fas fa-crown" style="color:var(--orange)"></i> Assign Membership Rank</h3>
+      <button class="modal-close" onclick="closeModal('rankModal')">×</button>
+    </div>
+    <div class="modal-body-rank">
+      <div class="rank-modal-user" id="rankModalUser"></div>
+      <form action="{{ url_for('admin_update_membership') }}" method="POST" id="rankForm">
+        <input type="hidden" name="user_id" id="rankUserId">
+        <input type="hidden" name="redirect_to" value="admin_dashboard">
+        <div class="rank-grid">
+          {% for rank, info in membership_ranks.items() %}
+          <label class="rank-option" style="--rank-color: {{ info.color }}">
+            <input type="radio" name="membership" value="{{ rank }}" id="rank-{{ rank }}">
+            <div class="rank-option-inner">
+              <i class="fas {{ info.icon }}"></i>
+              <span>{{ rank }}</span>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeModal('rankModal')">Cancel</button>
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-save"></i> Assign Rank
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openRankModal(userId, userName, currentRank) {
+  document.getElementById('rankUserId').value = userId;
+  document.getElementById('rankModalUser').innerHTML =
+    `<i class="fas fa-user-circle"></i> <strong>${userName}</strong> — current rank: <span id="crank">${currentRank}</span>`;
+  const radio = document.getElementById('rank-' + currentRank);
+  if (radio) radio.checked = true;
+  openModal('rankModal');
+}
+
+function filterUsers() {
+  const q = document.getElementById('userSearch').value.toLowerCase();
+  document.querySelectorAll('#usersTable tbody tr').forEach(row => {
+    if (row.querySelector('.empty-row')) return;
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function scrollToSection(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Load charts via API
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res  = await fetch('/admin/api/stats');
+    const data = await res.json();
+    initAdminCharts(data);
+  } catch(e) { console.warn('Chart data unavailable', e); }
+});
+
+function initAdminCharts(data) {
+  Chart.defaults.color = '#8b92b8';
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.07)';
+
+  // Growth bar chart
+  const gCtx = document.getElementById('growthChart');
+  if (gCtx && data.growth) {
+    new Chart(gCtx, {
+      type: 'bar',
+      data: {
+        labels: data.growth.map(d => d.month),
+        datasets: [{
+          label: 'New Users',
+          data: data.growth.map(d => d.count),
+          backgroundColor: ctx => {
+            const g = ctx.chart.ctx.createLinearGradient(0,0,0,200);
+            g.addColorStop(0, 'rgba(167,139,250,.8)');
+            g.addColorStop(1, 'rgba(167,139,250,.1)');
+            return g;
+          },
+          borderColor: '#a78bfa', borderWidth: 2,
+          borderRadius: 8, borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { stepSize: 1 } }
+        }
+      }
+    });
+  }
+
+  // Rank doughnut
+  const RANK_COLORS = { Free:'#6b7280', Silver:'#94a3b8', Gold:'#f59e0b', Platinum:'#38bdf8', Diamond:'#a78bfa', Enterprise:'#ff6b6b' };
+  const rCtx = document.getElementById('rankChart');
+  if (rCtx && data.ranks) {
+    new Chart(rCtx, {
+      type: 'doughnut',
+      data: {
+        labels: data.ranks.map(d => d.name),
+        datasets: [{
+          data: data.ranks.map(d => d.count),
+          backgroundColor: data.ranks.map(d => RANK_COLORS[d.name] || '#6b7280'),
+          borderColor: '#13172b', borderWidth: 3, hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '70%',
+        plugins: { legend: { display: false } }
+      }
+    });
+    // Legend
+    const leg = document.getElementById('rankLegend');
+    if (leg) {
+      leg.innerHTML = data.ranks.map(d =>
+        `<div class="legend-item">
+          <div class="legend-dot" style="background:${RANK_COLORS[d.name]||'#6b7280'}"></div>
+          <span>${d.name}</span><span>${d.count}</span>
+        </div>`
+      ).join('');
+    }
+  }
+}
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

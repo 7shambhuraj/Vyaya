@@ -1,0 +1,536 @@
+{% extends "base.html" %}
+{% block title %}Budgets — Vyaya ET{% endblock %}
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+
+  
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-icon"><i class="fas fa-wallet"></i></div>
+        <span class="brand-name">Vyaya ET</span>
+      </div>
+      <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('dashboard') }}" class="nav-item"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+      <a href="{{ url_for('budgets') }}"   class="nav-item active"><i class="fa fa-bar-chart"></i><span>Budgets</span></a>
+      <a href="{{ url_for('profile') }}"   class="nav-item"><i class="fas fa-user-circle"></i><span>Profile</span></a>
+      <a href="{{ url_for('about') }}"     class="nav-item"><i class="fa fa-phone"></i><span>About Vyaya</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        {% if session.user_pic %}
+          <img src="{{ url_for('static', filename='uploads/' + session.user_pic) }}" alt="avatar" class="user-avatar">
+        {% else %}
+          <div class="user-avatar-placeholder"><i class="fas fa-user"></i></div>
+        {% endif %}
+        <div class="user-info">
+          <span class="user-name">{{ session.user_name }}</span>
+          <small>{{ session.user_membership or 'Free' }} Member</small>
+        </div>
+      </div>
+      <a href="{{ url_for('logout') }}" class="btn-logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    
+    <header class="topbar">                                                                                                       <!-- Topbar -->
+      <div class="topbar-left">
+        <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div>
+          <h1 class="page-title">Budget Manager</h1>
+          <p class="page-sub">{{ now.strftime('%B %Y') }} — Set, Track & Control Your Spending</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-primary" onclick="openModal('addBudgetModal')">
+          <i class="fas fa-plus"></i> Set Budget
+        </button>
+      </div>
+    </header>
+
+    
+    {% if monthly_budgets %}                                                                                                        <!--  Current Month Budget C -->
+    <section style="padding:1.5rem 2rem 0;">
+      <h3 class="section-title-bud"><i class="fas fa-calendar-alt"></i> {{ now.strftime('%B %Y') }} Monthly Budgets</h3>
+      <div class="budget-cards-grid">
+        {% for b in monthly_budgets %}
+        {% set pct   = [(b.spent / b.amount * 100), 100]|min if b.amount > 0 else 0 %}
+        {% set remaining = b.amount - b.spent %}
+        {% set over  = b.spent > b.amount %}
+        <div class="budget-card {% if over %}budget-over{% elif pct > 80 %}budget-warn{% else %}budget-ok{% endif %}">
+          <div class="budget-card-top">
+            <div>
+              <span class="budget-cat-label">{{ b.category }}</span>
+              <span class="budget-type-tag">Monthly</span>
+            </div>
+            <form action="{{ url_for('delete_budget', budget_id=b.id) }}" method="POST" style="display:inline"
+                  onsubmit="return confirm('Delete this budget?')">
+              <button type="submit" class="btn-delete" title="Delete"><i class="fas fa-trash-alt"></i></button>
+            </form>
+          </div>
+
+          <div class="budget-amounts">
+            <div class="budget-spent">
+              <span class="bud-label">Spent</span>
+              <span class="bud-val spent">₹{{ "%.0f"|format(b.spent) }}</span>
+            </div>
+            <div class="budget-divider">/</div>
+            <div class="budget-total">
+              <span class="bud-label">Budget</span>
+              <span class="bud-val total">₹{{ "%.0f"|format(b.amount) }}</span>
+            </div>
+            <div class="budget-remaining">
+              <span class="bud-label">{{ 'Over by' if over else 'Left' }}</span>
+              <span class="bud-val {% if over %}over{% else %}left{% endif %}">
+                ₹{{ "%.0f"|format(remaining|abs) }}
+              </span>
+            </div>
+          </div>
+
+          
+          <div class="budget-progress-wrap">                                                                         <!-- Progress bar -->
+            <div class="budget-progress-bar">
+              <div class="budget-progress-fill" style="width:{{ pct }}%"></div>
+            </div>
+            <span class="budget-pct">{{ "%.0f"|format(pct) }}%</span>
+          </div>
+
+          {% if b.note %}
+          <p class="budget-note"><i class="fas fa-sticky-note"></i> {{ b.note }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    
+    {% if yearly_budgets %}                                                                                                <!--  Current Year Budget   -->
+    <section style="padding:1rem 2rem 0;">
+      <h3 class="section-title-bud"><i class="fas fa-chart-line"></i> {{ now.year }} Yearly Budgets</h3>
+      <div class="budget-cards-grid">
+        {% for b in yearly_budgets %}
+        {% set pct       = [(b.spent / b.amount * 100), 100]|min if b.amount > 0 else 0 %}
+        {% set remaining = b.amount - b.spent %}
+        {% set over      = b.spent > b.amount %}
+        <div class="budget-card {% if over %}budget-over{% elif pct > 80 %}budget-warn{% else %}budget-ok{% endif %}">
+          <div class="budget-card-top">
+            <div>
+              <span class="budget-cat-label">{{ b.category }}</span>
+              <span class="budget-type-tag yearly">Yearly</span>
+            </div>
+            <form action="{{ url_for('delete_budget', budget_id=b.id) }}" method="POST" style="display:inline"
+                  onsubmit="return confirm('Delete this budget?')">
+              <button type="submit" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
+            </form>
+          </div>
+          <div class="budget-amounts">
+            <div class="budget-spent"><span class="bud-label">Spent</span><span class="bud-val spent">₹{{ "%.0f"|format(b.spent) }}</span></div>
+            <div class="budget-divider">/</div>
+            <div class="budget-total"><span class="bud-label">Budget</span><span class="bud-val total">₹{{ "%.0f"|format(b.amount) }}</span></div>
+            <div class="budget-remaining">
+              <span class="bud-label">{{ 'Over by' if over else 'Left' }}</span>
+              <span class="bud-val {% if over %}over{% else %}left{% endif %}">₹{{ "%.0f"|format(remaining|abs) }}</span>
+            </div>
+          </div>
+          <div class="budget-progress-wrap">
+            <div class="budget-progress-bar">
+              <div class="budget-progress-fill" style="width:{{ pct }}%"></div>
+            </div>
+            <span class="budget-pct">{{ "%.0f"|format(pct) }}%</span>
+          </div>
+          {% if b.note %}<p class="budget-note"><i class="fas fa-sticky-note"></i> {{ b.note }}</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if not monthly_budgets and not yearly_budgets %}
+    <div class="budget-empty-state">
+      <i class="fas fa-piggy-bank"></i>
+      <h3>No budgets set yet</h3>
+      <p>Click <strong>Set Budget</strong> to create your first monthly or yearly budget.</p>
+      <button class="btn-primary" onclick="openModal('addBudgetModal')">
+        <i class="fas fa-plus"></i> Set Your First Budget
+      </button>
+    </div>
+    {% endif %}
+
+    
+    <section class="table-card" style="margin:1.5rem 2rem;">                                                 <!--  Expenditure Table Category / Budget this month  -->
+      <div class="table-header">
+        <h3><i class="fas fa-table"></i> Expenditure - {{ now.strftime('%B %Y') }}</h3>
+        <span class="badge badge-blue">This Month</span>
+      </div>
+      <div class="table-wrapper">
+        <table class="expense-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Budget Set</th>
+              <th>Amount Spent</th>
+              <th>Remaining</th>
+              <th>Usage</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set categories = ['Food','Transport','Utilities','Entertainment','Healthcare','Education','Shopping','Health','Travel','Other'] %}
+            {% for cat in categories %}
+              {% set cat_spent = namespace(val=0) %}
+              {% for cs in cat_spending %}
+                {% if cs.category == cat %}{% set cat_spent.val = cs.spent %}{% endif %}
+              {% endfor %}
+              {% set cat_budget = namespace(val=0) %}
+              {% for mb in monthly_budgets %}
+                {% if mb.category == cat %}{% set cat_budget.val = mb.amount %}{% endif %}
+              {% endfor %}
+              {% if cat_spent.val > 0 or cat_budget.val > 0 %}
+              {% set pct = [(cat_spent.val / cat_budget.val * 100), 100]|min if cat_budget.val > 0 else 0 %}
+              {% set rem = cat_budget.val - cat_spent.val %}
+              <tr>
+                <td>
+                  <div class="expense-title-cell">
+                    <div class="cat-dot cat-{{ cat|lower|replace(' ','') }}"></div>
+                    <span>{{ cat }}</span>
+                  </div>
+                </td>
+                <td>{% if cat_budget.val > 0 %}<span style="color:var(--blue);font-weight:600">₹{{ "%.0f"|format(cat_budget.val) }}</span>{% else %}<span style="color:var(--text-muted)">—</span>{% endif %}</td>
+                <td class="amount-cell">₹{{ "%.2f"|format(cat_spent.val) }}</td>
+                <td>
+                  {% if cat_budget.val > 0 %}
+                    <span style="color:{% if rem < 0 %}var(--coral){% else %}var(--green){% endif %};font-weight:600;">
+                      {% if rem < 0 %}−{% endif %}₹{{ "%.0f"|format(rem|abs) }}
+                    </span>
+                  {% else %}<span style="color:var(--text-muted)">No budget</span>{% endif %}
+                </td>
+                <td>
+                  {% if cat_budget.val > 0 %}
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="flex:1;height:6px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
+                      <div style="width:{{ pct }}%;height:100%;border-radius:3px;background:{% if pct>=100 %}var(--coral){% elif pct>=80 %}var(--orange){% else %}var(--green){% endif %};transition:width .5s;"></div>
+                    </div>
+                    <span style="font-size:.75rem;color:var(--text-secondary);min-width:32px;">{{ "%.0f"|format(pct) }}%</span>
+                  </div>
+                  {% else %}<span style="color:var(--text-muted);font-size:.8rem;">—</span>{% endif %}
+                </td>
+                <td>
+                  {% if cat_budget.val > 0 %}
+                    {% if pct >= 100 %}<span class="status-pill over"><i class="fas fa-exclamation-circle"></i> Over Budget</span>
+                    {% elif pct >= 80 %}<span class="status-pill warn"><i class="fas fa-exclamation-triangle"></i> Near Limit</span>
+                    {% else %}<span class="status-pill good"><i class="fas fa-check-circle"></i> On Track</span>{% endif %}
+                  {% else %}<span class="status-pill none">No Budget</span>{% endif %}
+                </td>
+              </tr>
+              {% endif %}
+            {% endfor %}
+
+                                                                                                                                              <!-- Overall row -->
+            {% set overall_budget = namespace(val=0) %}
+            {% for mb in monthly_budgets %}{% if mb.category=='Overall' %}{% set overall_budget.val = mb.amount %}{% endif %}{% endfor %}
+            {% set total_spent_month = namespace(val=0) %}
+            {% for cs in cat_spending %}{% set total_spent_month.val = total_spent_month.val + cs.spent %}{% endfor %}
+
+            <tr style="background:var(--bg-card-2);border-top:2px solid var(--border);">
+              <td><strong style="color:var(--text-primary)"><i class="fas fa-sigma" style="color:var(--blue);margin-right:6px"></i>Total</strong></td>
+              <td>{% if overall_budget.val > 0 %}<span style="color:var(--blue);font-weight:700">₹{{ "%.0f"|format(overall_budget.val) }}</span>{% else %}<span style="color:var(--text-muted)">—</span>{% endif %}</td>
+              <td><span class="amount-cell" style="font-weight:800">₹{{ "%.2f"|format(total_spent_month.val) }}</span></td>
+              <td>
+                {% if overall_budget.val > 0 %}
+                {% set total_rem = overall_budget.val - total_spent_month.val %}
+                <span style="color:{% if total_rem < 0 %}var(--coral){% else %}var(--green){% endif %};font-weight:700;font-size:1rem;">
+                  {% if total_rem < 0 %}−{% endif %}₹{{ "%.0f"|format(total_rem|abs) }}
+                </span>
+                {% else %}<span style="color:var(--text-muted)">—</span>{% endif %}
+              </td>
+              <td colspan="2">
+                {% if overall_budget.val > 0 %}
+                {% set total_pct = [(total_spent_month.val / overall_budget.val * 100), 100]|min %}
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="flex:1;height:8px;background:var(--bg-hover);border-radius:4px;overflow:hidden;">
+                    <div style="width:{{ total_pct }}%;height:100%;border-radius:4px;background:{% if total_pct>=100 %}var(--coral){% elif total_pct>=80 %}var(--orange){% else %}var(--green){% endif %};"></div>
+                  </div>
+                  <strong style="font-size:.85rem;color:var(--text-primary)">{{ "%.0f"|format(total_pct) }}%</strong>
+                </div>
+                {% endif %}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+                                                                                                                        <!-- ── All budgets history Table  -->
+    {% if all_budgets %}
+    <section class="table-card" style="margin:0 2rem 2rem;">
+      <div class="table-header">
+        <h3><i class="fas fa-history"></i> All Budgets</h3>
+        <div class="table-search">
+          <i class="fas fa-search"></i>
+          <input type="text" id="budgetSearch" placeholder="Search…" oninput="filterBudgets()">
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="expense-table" id="budgetTable">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Category</th>
+              <th>Period</th>
+              <th>Budget</th>
+              <th>Spent</th>
+              <th>Remaining</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in all_budgets %}
+            {% set pct = [(b.spent / b.amount * 100), 100]|min if b.amount > 0 else 0 %}
+            {% set rem = b.amount - b.spent %}
+            <tr>
+              <td>
+                <span class="budget-type-tag {% if b.budget_type=='yearly' %}yearly{% endif %}">
+                  <i class="fas {% if b.budget_type=='monthly' %}fa-calendar-alt{% else %}fa-chart-line{% endif %}"></i>
+                  {{ b.budget_type|title }}
+                </span>
+              </td>
+              <td>
+                <div class="expense-title-cell">
+                  <div class="cat-dot cat-{{ b.category|lower|replace(' ','') }}"></div>
+                  <span>{{ b.category }}</span>
+                </div>
+              </td>
+              <td style="font-size:.82rem;color:var(--text-secondary)">
+                {% if b.budget_type=='monthly' %}
+                  {{ ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][b.month] }} {{ b.year }}
+                {% else %}
+                  {{ b.year }}
+                {% endif %}
+              </td>
+              <td style="color:var(--blue);font-weight:600">₹{{ "%.0f"|format(b.amount) }}</td>
+              <td class="amount-cell">₹{{ "%.0f"|format(b.spent) }}</td>
+              <td>
+                <span style="color:{% if rem < 0 %}var(--coral){% else %}var(--green){% endif %};font-weight:600">
+                  {% if rem < 0 %}−{% endif %}₹{{ "%.0f"|format(rem|abs) }}
+                </span>
+              </td>
+              <td>
+                {% if pct >= 100 %}<span class="status-pill over"><i class="fas fa-times-circle"></i> Over</span>
+                {% elif pct >= 80 %}<span class="status-pill warn"><i class="fas fa-exclamation-triangle"></i> Warning</span>
+                {% else %}<span class="status-pill good"><i class="fas fa-check-circle"></i> Good</span>{% endif %}
+              </td>
+              <td>
+                <form action="{{ url_for('delete_budget', budget_id=b.id) }}" method="POST" style="display:inline"
+                      onsubmit="return confirm('Delete this budget?')">
+                  <button type="submit" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {% endif %}
+
+  </main>
+</div>
+
+
+<div class="modal-overlay" id="addBudgetModal" onclick="closeModalOutside(event,'addBudgetModal')">  <!--  Add Budget Mod -->
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <h3><i class="fa fa-bar-chart" style="color:var(--green)"></i> Set New Budget</h3>
+      <button class="modal-close" onclick="closeModal('addBudgetModal')">×</button>
+    </div>
+    <form action="{{ url_for('add_budget') }}" method="POST" class="modal-form">
+
+      <!-- Budget type toggle -->
+      <div class="input-group">
+        <label>Budget Type</label>
+        <div class="budget-type-toggle">
+          <label class="type-opt">
+            <input type="radio" name="budget_type" value="monthly" checked onchange="toggleBudgetType(this)">
+            <span><i class="fas fa-calendar-alt"></i> Monthly</span>
+          </label>
+          <label class="type-opt">
+            <input type="radio" name="budget_type" value="yearly" onchange="toggleBudgetType(this)">
+            <span><i class="fas fa-chart-line"></i> Yearly</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <!-- Month -->
+        <div class="input-group" id="monthGroup">
+          <label>Month</label>
+          <select name="month" id="monthSelect">
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <!-- Year -->
+        <div class="input-group">
+          <label>Year</label>
+          <select name="year">
+            {% for y in range(now.year - 1, now.year + 3) %}
+            <option value="{{ y }}" {% if y == now.year %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label>Category</label>
+          <select name="category">
+            <option value="Overall">📊 Overall (All Categories)</option>
+            <option value="Food">🍛 Food</option>
+            <option value="Transport">🚗 Transport</option>
+            <option value="Utilities">⚡ Utilities</option>
+            <option value="Entertainment">🎬 Entertainment</option>
+            <option value="Healthcare">💊 Healthcare</option>
+            <option value="Education">📚 Education</option>
+            <option value="Shopping">🛍️ Shopping</option>
+            <option value="Health">💪 Health</option>
+            <option value="Travel">✈️ Travel</option>
+            <option value="Other">📦 Other</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Budget Amount (₹)</label>
+          <input type="number" name="amount" placeholder="e.g. 10000" min="1" step="1" required>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Note (optional)</label>
+        <input type="text" name="note" placeholder="e.g. Strict grocery budget">
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal('addBudgetModal')">Cancel</button>
+        <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Save Budget</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<style>
+.section-title-bud {
+  font-family:'Syne',sans-serif; font-size:1rem; font-weight:700;
+  margin-bottom:1rem; display:flex; align-items:center; gap:8px;
+}
+.section-title-bud i { color:var(--green); }
+
+/* Budget cards */
+.budget-cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem; }
+.budget-card {
+  background:var(--bg-card); border-radius:var(--radius); border:1px solid var(--border);
+  padding:1.2rem; transition:transform .2s, box-shadow .2s; position:relative; overflow:hidden;
+}
+.budget-card:hover { transform:translateY(-3px); box-shadow:var(--shadow); }
+.budget-ok   { border-top:3px solid var(--green); }
+.budget-warn { border-top:3px solid var(--orange); }
+.budget-over { border-top:3px solid var(--coral); }
+
+.budget-card-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:.8rem; }
+.budget-cat-label { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; display:block; margin-bottom:3px; }
+.budget-type-tag {
+  display:inline-block; padding:2px 8px; border-radius:10px; font-size:.7rem; font-weight:600;
+  background:var(--blue-dim); color:var(--blue-light);
+}
+.budget-type-tag.yearly { background:var(--purple-dim); color:var(--purple); }
+
+.budget-amounts { display:flex; align-items:center; gap:.6rem; margin-bottom:.8rem; flex-wrap:wrap; }
+.bud-label { font-size:.7rem; color:var(--text-muted); display:block; margin-bottom:1px; }
+.bud-val { font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; display:block; }
+.bud-val.spent { color:var(--coral); }
+.bud-val.total { color:var(--blue); }
+.bud-val.left  { color:var(--green); }
+.bud-val.over  { color:var(--coral); }
+.budget-divider { color:var(--text-muted); font-size:1.3rem; margin-top:10px; }
+
+.budget-progress-wrap { display:flex; align-items:center; gap:8px; margin-bottom:.5rem; }
+.budget-progress-bar  { flex:1; height:8px; background:var(--bg-hover); border-radius:4px; overflow:hidden; }
+.budget-progress-fill {
+  height:100%; border-radius:4px; transition:width .6s ease;
+  background:var(--green);
+}
+.budget-over  .budget-progress-fill { background:var(--coral); }
+.budget-warn  .budget-progress-fill { background:var(--orange); }
+.budget-pct { font-size:.78rem; color:var(--text-secondary); min-width:34px; text-align:right; font-weight:600; }
+.budget-note { font-size:.75rem; color:var(--text-muted); margin-top:.4rem; }
+.budget-note i { margin-right:4px; }
+
+/* Status pills */
+.status-pill {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:600;
+}
+.status-pill.good { background:var(--green-dim);  color:var(--green); }
+.status-pill.warn { background:rgba(251,146,60,.15); color:var(--orange); }
+.status-pill.over { background:var(--coral-dim);  color:var(--coral); }
+.status-pill.none { background:var(--bg-hover);   color:var(--text-muted); }
+
+/* Budget type toggle in modal */
+.budget-type-toggle { display:flex; gap:.6rem; }
+.type-opt { flex:1; cursor:pointer; }
+.type-opt input { display:none; }
+.type-opt span {
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  padding:10px; border-radius:var(--radius-sm); border:2px solid var(--border);
+  background:var(--bg-input); font-size:.88rem; font-weight:500;
+  transition:all .2s; color:var(--text-secondary);
+}
+.type-opt input:checked + span { border-color:var(--green); color:var(--green); background:var(--green-dim); }
+
+/* Empty state */
+.budget-empty-state {
+  text-align:center; padding:4rem 2rem; margin:2rem;
+  background:var(--bg-card); border-radius:var(--radius); border:1px dashed var(--border);
+}
+.budget-empty-state i { font-size:3.5rem; color:var(--text-muted); display:block; margin-bottom:1rem; }
+.budget-empty-state h3 { font-family:'Syne',sans-serif; margin-bottom:.5rem; }
+.budget-empty-state p { color:var(--text-secondary); margin-bottom:1.5rem; }
+
+@media(max-width:768px){
+  .budget-cards-grid { grid-template-columns:1fr; }
+  .budget-amounts { gap:.4rem; }
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+document.getElementById('monthSelect').value = new Date().getMonth() + 1;
+
+function toggleBudgetType(radio) {
+  const monthGroup = document.getElementById('monthGroup');
+  monthGroup.style.display = radio.value === 'monthly' ? '' : 'none';
+}
+
+function filterBudgets() {
+  const q = document.getElementById('budgetSearch').value.toLowerCase();
+  document.querySelectorAll('#budgetTable tbody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}
