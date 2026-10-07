@@ -69,10 +69,10 @@ Make sure you have the following installed on your machine:
 ## 👤 Author
 
 * **Shambhuraj Jangam** 
-* **GitHub:** [@7shambhuraj](https://github.com)
-* **LinkedIn:** [shambhurajjangam](https://linkedin.com)
-* **Instagram:** [7shambhuraj](https://instagram.com)
-* **X:** [7shambhuraj](https://x.com)
-* **facebook:** [shambhurajjangam](https://facebook.com)
+* **GitHub:** [@7shambhuraj](https://github.com/7shambhuraj)
+* **LinkedIn:** [shambhurajjangam](https://www.linkedin.com/in/shambhurajjangam/)
+* **Instagram:** [7shambhuraj](https://www.instagram.com/7shambhuraj)
+* **X:** [7shambhuraj](https://x.com/7shambhuraj)
+* **Facebook:** [shambhurajjangam](https://www.facebook.com/shambhurajjangam)
 
 ⭐ *If you find this project helpful, feel free to leave a star on the repository!*
