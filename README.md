@@ -71,8 +71,8 @@ Make sure you have the following installed on your machine:
 * **Shambhuraj Jangam** 
 * **GitHub:** [@7shambhuraj](https://github.com)
 * **LinkedIn:** [shambhurajjangam](https://linkedin.com)
-* **Instagram:** [7shambhuraj](https://linkedin.com)
-* **X:** [7shambhuraj](https://linkedin.com)
-* **facebook:** [shambhurajjangam](https://linkedin.com)
+* **Instagram:** [7shambhuraj](https://instagram.com)
+* **X:** [7shambhuraj](https://x.com)
+* **facebook:** [shambhurajjangam](https://facebook.com)
 
 ⭐ *If you find this project helpful, feel free to leave a star on the repository!*
